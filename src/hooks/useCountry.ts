@@ -1,5 +1,5 @@
 import { csv } from "d3-fetch";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { countriesWithImage, Country } from "../domain/countries";
 
 interface DateCountry {
@@ -7,31 +7,26 @@ interface DateCountry {
   date: string;
 }
 
-export function useCountry(dayString: string): [Country | undefined] {
-  const [forcedCountryCode, setForcedCountryCode] = useState("");
+export function useCountry(): [Country | undefined] {
+  const [countryCode, setCountryCode] = useState("");
 
   useEffect(() => {
     csv("data.csv", (d) => {
       return { country: d.country, date: d.date };
     }).then((data) => {
-      setForcedCountryCode(
+      setCountryCode(
         data.length
           ? (
-              data.find((el) => el.date === dayString) as DateCountry
+              data[Math.floor(Math.random() * data.length)] as DateCountry
             )?.country.toUpperCase() || ""
           : ""
       );
     });
-  }, [dayString]);
+  }, []);
 
-  const country = useMemo(() => {
-    const forcedCountry =
-      forcedCountryCode !== ""
-        ? countriesWithImage.find(
-            (country) => country.code === forcedCountryCode
-          )
-        : undefined;
-    return forcedCountry;
-  }, [forcedCountryCode]);
+  const country = countriesWithImage.find(
+    (country) => country.code === countryCode
+  );
+
   return [country];
 }

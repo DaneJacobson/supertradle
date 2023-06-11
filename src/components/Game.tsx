@@ -1,11 +1,4 @@
-import { DateTime } from "luxon";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import {
   countries,
@@ -25,10 +18,6 @@ import { useMode } from "../hooks/useMode";
 import { useCountry } from "../hooks/useCountry";
 import axios from "axios";
 
-function getDayString() {
-  return DateTime.now().toFormat("yyyy-MM-dd");
-}
-
 const MAX_TRY_COUNT = 6;
 
 interface GameProps {
@@ -37,12 +26,12 @@ interface GameProps {
 
 export function Game({ settingsData }: GameProps) {
   const { t, i18n } = useTranslation();
-  const dayString = useMemo(getDayString, []);
-  const isAprilFools = dayString === "2022-04-01";
+  const isAprilFools = false;
+  const dayString = "2022-04-01";
 
   const countryInputRef = useRef<HTMLInputElement>(null);
 
-  const countryData = useCountry(`${dayString}`);
+  const countryData = useCountry();
   let country = countryData[0];
 
   if (isAprilFools) {
