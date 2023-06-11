@@ -7,8 +7,7 @@ export interface Guess {
 }
 
 export function loadAllGuesses(): Record<string, Guess[]> {
-  const storedGuesses = localStorage.getItem("guesses");
-  return storedGuesses != null ? JSON.parse(storedGuesses) : {};
+  return {};
 }
 
 export function saveGuesses(dayString: string, guesses: Guess[]): void {
