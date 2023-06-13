@@ -30,9 +30,9 @@ export function getStatsData(): StatsData {
   let previousDate: DateTime | undefined;
   let bestDistanceSum = 0;
   for (const [dayString, guesses] of allGuessesEntries) {
-    bestDistanceSum += Math.min(...guesses.map((guess) => guess.distance));
+    bestDistanceSum += Math.min(...guesses.map((guess) => guess.fromDistance));
     const currentDate = DateTime.fromFormat(dayString, "yyyy-MM-dd");
-    const winIndex = guesses.findIndex((guess) => guess.distance === 0);
+    const winIndex = guesses.findIndex((guess) => guess.toDistance === 0);
     const won = winIndex >= 0;
     if (won) {
       const tryCount = (winIndex + 1) as 1 | 2 | 3 | 4 | 5 | 6;

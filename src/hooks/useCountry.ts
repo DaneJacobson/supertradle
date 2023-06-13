@@ -7,26 +7,41 @@ interface DateCountry {
   date: string;
 }
 
-export function useCountry(): [Country | undefined] {
-  const [countryCode, setCountryCode] = useState("");
+export function useCountries(): [Country | undefined, Country | undefined] {
+  const [fromCountryCode, setFromCountryCode] = useState("");
+  const [toCountryCode, setToCountryCode] = useState("");
 
   useEffect(() => {
     csv("data.csv", (d) => {
       return { country: d.country, date: d.date };
     }).then((data) => {
-      setCountryCode(
+      const fromIdx = Math.floor(Math.random() * data.length);
+      let toIdx = 0;
+      do {
+        toIdx = Math.floor(Math.random() * data.length);
+      } while (fromIdx === toIdx);
+
+      setFromCountryCode(
         data.length
-          ? (
-              data[Math.floor(Math.random() * data.length)] as DateCountry
-            )?.country.toUpperCase() || ""
+          ? (data[fromIdx] as DateCountry)?.country.toUpperCase() || ""
+          : ""
+      );
+
+      setToCountryCode(
+        data.length
+          ? (data[toIdx] as DateCountry)?.country.toUpperCase() || ""
           : ""
       );
     });
   }, []);
 
-  const country = countriesWithImage.find(
-    (country) => country.code === countryCode
+  const fromCountry = countriesWithImage.find(
+    (country) => country.code === fromCountryCode
   );
 
-  return [country];
+  const toCountry = countriesWithImage.find(
+    (country) => country.code === toCountryCode
+  );
+
+  return [fromCountry, toCountry];
 }

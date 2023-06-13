@@ -58,8 +58,12 @@ export function GuessRow({
   isAprilFools = false,
 }: GuessRowProps) {
   const { distanceUnit, theme } = settingsData;
-  const proximity = guess != null ? computeProximityPercent(guess.distance) : 0;
-  const squares = generateSquareCharacters(proximity, theme);
+  const fromProximity =
+    guess != null ? computeProximityPercent(guess.fromDistance) : 0;
+  const toProximity =
+    guess != null ? computeProximityPercent(guess.toDistance) : 0;
+  const fromSquares = generateSquareCharacters(fromProximity, theme);
+  const toSquares = generateSquareCharacters(toProximity, theme);
 
   const [animationState, setAnimationState] =
     useState<AnimationState>("NOT_STARTED");
@@ -90,7 +94,7 @@ export function GuessRow({
       return (
         <div
           onClick={handleClickOnEmptyRow}
-          className={`bg-stone-200 rounded-lg my-1 col-span-7 h-8 bg-gray-200`}
+          className={`bg-stone-200 rounded-lg my-1 col-span-7 h-8`}
         />
       );
     case "RUNNING":
@@ -99,7 +103,7 @@ export function GuessRow({
           <div
             className={`flex text-2xl w-full justify-evenly items-center col-span-6 border-2 h-8`}
           >
-            {squares.map((character, index) => (
+            {fromSquares.map((character, index) => (
               <div
                 key={index}
                 className="opacity-0 animate-reveal"
@@ -113,7 +117,29 @@ export function GuessRow({
           </div>
           <div className="border-2 h-8 col-span-1 animate-reveal">
             <CountUp
-              end={isAprilFools ? 100 : proximity}
+              end={isAprilFools ? 100 : fromProximity}
+              suffix="%"
+              duration={(SQUARE_ANIMATION_LENGTH * 5) / 1000}
+            />
+          </div>
+          <div
+            className={`flex text-2xl w-full justify-evenly items-center col-span-6 border-2 h-8`}
+          >
+            {toSquares.map((character, index) => (
+              <div
+                key={index}
+                className="opacity-0 animate-reveal"
+                style={{
+                  animationDelay: `${SQUARE_ANIMATION_LENGTH * index}ms`,
+                }}
+              >
+                {character}
+              </div>
+            ))}
+          </div>
+          <div className="border-2 h-8 col-span-1 animate-reveal">
+            <CountUp
+              end={isAprilFools ? 100 : toProximity}
               suffix="%"
               duration={(SQUARE_ANIMATION_LENGTH * 5) / 1000}
             />
@@ -125,18 +151,18 @@ export function GuessRow({
         <>
           <div
             className={
-              guess?.distance === 0
+              guess?.fromDistance === 0
                 ? "bg-oec-yellow rounded-lg flex items-center h-8 col-span-3 animate-reveal pl-2"
                 : "bg-gray-200 rounded-lg flex items-center h-8 col-span-3 animate-reveal pl-2"
             }
           >
             <p className="text-ellipsis overflow-hidden whitespace-nowrap">
-              {getCountryPrettyName(guess?.name, isAprilFools)}
+              {getCountryPrettyName(guess?.fromName, isAprilFools)}
             </p>
           </div>
           <div
             className={
-              guess?.distance === 0
+              guess?.fromDistance === 0
                 ? "bg-oec-yellow rounded-lg flex items-center justify-center h-8 col-span-2 animate-reveal"
                 : "bg-gray-200 rounded-lg flex items-center justify-center h-8 col-span-2 animate-reveal"
             }
@@ -144,34 +170,85 @@ export function GuessRow({
             {guess && isAprilFools
               ? "⁇"
               : guess
-              ? formatDistance(guess.distance, distanceUnit)
+              ? formatDistance(guess.fromDistance, distanceUnit)
               : null}
           </div>
           <div
             className={
-              guess?.distance === 0
+              guess?.fromDistance === 0
                 ? "bg-oec-yellow rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal"
                 : "bg-gray-200 rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal"
             }
           >
-            {guess?.distance === 0
+            {guess?.fromDistance === 0
               ? "🎉"
               : guess && isAprilFools
               ? "⁇"
               : guess
-              ? DIRECTION_ARROWS[guess.direction]
+              ? DIRECTION_ARROWS[guess.fromDirection]
               : null}
           </div>
           <div
             className={
-              guess?.distance === 0
+              guess?.fromDistance === 0
                 ? "bg-oec-yellow rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal animate-pop"
                 : "bg-gray-200 rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal animate-pop"
             }
           >
             {isAprilFools
               ? DIRECTION_ARROWS_APRIL_FOOLS[index]
-              : `${proximity}%`}
+              : `${fromProximity}%`}
+          </div>
+
+          <div
+            className={
+              guess?.toDistance === 0
+                ? "bg-oec-yellow rounded-lg flex items-center h-8 col-span-3 animate-reveal pl-2"
+                : "bg-gray-200 rounded-lg flex items-center h-8 col-span-3 animate-reveal pl-2"
+            }
+          >
+            <p className="text-ellipsis overflow-hidden whitespace-nowrap">
+              {getCountryPrettyName(guess?.toName, isAprilFools)}
+            </p>
+          </div>
+          <div
+            className={
+              guess?.toDistance === 0
+                ? "bg-oec-yellow rounded-lg flex items-center justify-center h-8 col-span-2 animate-reveal"
+                : "bg-gray-200 rounded-lg flex items-center justify-center h-8 col-span-2 animate-reveal"
+            }
+          >
+            {guess && isAprilFools
+              ? "⁇"
+              : guess
+              ? formatDistance(guess.toDistance, distanceUnit)
+              : null}
+          </div>
+          <div
+            className={
+              guess?.toDistance === 0
+                ? "bg-oec-yellow rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal"
+                : "bg-gray-200 rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal"
+            }
+          >
+            {guess?.toDistance === 0
+              ? "🎉"
+              : guess && isAprilFools
+              ? "⁇"
+              : guess
+              ? DIRECTION_ARROWS[guess.toDirection]
+              : null}
+          </div>
+          <div
+            className={
+              guess?.toDistance === 0
+                ? "bg-oec-yellow rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal animate-pop"
+                : "bg-gray-200 rounded-lg flex items-center justify-center h-8 col-span-1 animate-reveal animate-pop"
+            }
+          >
+            {isAprilFools
+              ? DIRECTION_ARROWS_APRIL_FOOLS[index]
+              : `${toProximity}%`}
           </div>
         </>
       );

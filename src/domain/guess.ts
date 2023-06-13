@@ -1,9 +1,12 @@
 import { Direction } from "./geography";
 
 export interface Guess {
-  name: string;
-  distance: number;
-  direction: Direction;
+  fromName: string;
+  toName: string;
+  fromDistance: number;
+  toDistance: number;
+  fromDirection: Direction;
+  toDirection: Direction;
 }
 
 export function loadAllGuesses(): Record<string, Guess[]> {

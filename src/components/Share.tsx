@@ -35,7 +35,7 @@ export function Share({
 
   const shareText = useMemo(() => {
     const guessCount =
-      guesses[guesses.length - 1]?.distance === 0 ? guesses.length : "X";
+      guesses[guesses.length - 1]?.fromDistance === 0 ? guesses.length : "X";
     const dayCount = Math.floor(
       Interval.fromDateTimes(START_DATE, new Date(dayString)).length("day")
     );
@@ -50,7 +50,7 @@ export function Share({
 
     const guessString = guesses
       .map((guess) => {
-        const percent = computeProximityPercent(guess.distance);
+        const percent = computeProximityPercent(guess.fromDistance);
         return generateSquareCharacters(percent, theme).join("");
       })
       .join("\n");

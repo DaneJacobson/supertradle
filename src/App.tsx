@@ -2,9 +2,7 @@ import { ToastContainer, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Game } from "./components/Game";
 import React, { useEffect, useState } from "react";
-import { Infos } from "./components/panels/Infos";
 import { useTranslation } from "react-i18next";
-import { InfosFr } from "./components/panels/InfosFr";
 import { Settings } from "./components/panels/Settings";
 import { useSettings } from "./hooks/useSettings";
 import { Stats } from "./components/panels/Stats";
@@ -39,7 +37,7 @@ function App() {
         autoClose={5000}
         bodyClassName="font-bold text-center"
       />
-      {i18n.resolvedLanguage === "fr" ? (
+      {/* {i18n.resolvedLanguage === "fr" ? (
         <InfosFr
           isOpen={infoOpen}
           close={() => setInfoOpen(false)}
@@ -51,7 +49,7 @@ function App() {
           close={() => setInfoOpen(false)}
           settingsData={settingsData}
         />
-      )}
+      )} */}
       <Settings
         isOpen={settingsOpen}
         close={() => setSettingsOpen(false)}

@@ -15,7 +15,7 @@ import { Guesses } from "./Guesses";
 import { useTranslation } from "react-i18next";
 import { SettingsData } from "../hooks/useSettings";
 import { useMode } from "../hooks/useMode";
-import { useCountry } from "../hooks/useCountry";
+import { useCountries } from "../hooks/useCountry";
 import axios from "axios";
 
 const MAX_TRY_COUNT = 6;
@@ -31,22 +31,14 @@ export function Game({ settingsData }: GameProps) {
 
   const countryInputRef = useRef<HTMLInputElement>(null);
 
-  const countryData = useCountry();
-  let country = countryData[0];
-
-  if (isAprilFools) {
-    country = {
-      code: "AJ",
-      latitude: 42.546245,
-      longitude: 1.601554,
-      name: "Land of Oz",
-    };
-  }
+  const targetCountries = useCountries();
 
   const [ipData, setIpData] = useState(null);
   const [won, setWon] = useState(false);
-  const [currentGuess, setCurrentGuess] = useState<string>("");
-  const [countryValue, setCountryValue] = useState<string>("");
+  const [currentFromGuess, setCurrentFromGuess] = useState<string>("");
+  const [currentToGuess, setCurrentToGuess] = useState<string>("");
+  const [fromCountryValue, setFromCountryValue] = useState<string>("");
+  const [toCountryValue, setToCountryValue] = useState<string>("");
   const [guesses, addGuess] = useGuesses(dayString);
   const [hideImageMode, setHideImageMode] = useMode(
     "hideImageMode",
@@ -61,46 +53,75 @@ export function Game({ settingsData }: GameProps) {
 
   const gameEnded =
     guesses.length === MAX_TRY_COUNT ||
-    guesses[guesses.length - 1]?.distance === 0;
+    (guesses[guesses.length - 1]?.fromDistance === 0 &&
+      guesses[guesses.length - 1]?.toDistance === 0);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (!country) return;
+      if (!targetCountries[0] || !targetCountries[1]) return;
       const getIpData = async () => {
         const res = await axios.get("https://geolocation-db.com/json/");
         setIpData(res.data);
       };
       const items = isAprilFools ? fictionalCountries : countries;
-      const guessedCountry = items.find(
+      const guessedFromCountry = items.find(
         (country) =>
           sanitizeCountryName(
             getCountryName(i18n.resolvedLanguage, country)
-          ) === sanitizeCountryName(currentGuess)
+          ) === sanitizeCountryName(currentFromGuess)
+      );
+      const guessedToCountry = items.find(
+        (country) =>
+          sanitizeCountryName(
+            getCountryName(i18n.resolvedLanguage, country)
+          ) === sanitizeCountryName(currentToGuess)
       );
 
-      if (guessedCountry == null) {
+      if (guessedFromCountry == null || guessedToCountry == null) {
         toast.error(t("unknownCountry"));
         return;
       }
 
       const newGuess = {
-        name: currentGuess,
-        distance: geolib.getDistance(guessedCountry, country),
-        direction: geolib.getCompassDirection(guessedCountry, country),
+        fromName: currentFromGuess,
+        toName: currentToGuess,
+        fromDistance: geolib.getDistance(
+          guessedFromCountry,
+          targetCountries[0]
+        ),
+        toDistance: geolib.getDistance(guessedToCountry, targetCountries[1]),
+        fromDirection: geolib.getCompassDirection(
+          guessedFromCountry,
+          targetCountries[0]
+        ),
+        toDirection: geolib.getCompassDirection(
+          guessedToCountry,
+          targetCountries[1]
+        ),
       };
 
       addGuess(newGuess);
-      setCurrentGuess("");
-      setCountryValue("");
+      setCurrentFromGuess("");
+      setCurrentToGuess("");
+      setFromCountryValue("");
+      setToCountryValue("");
 
-      if (newGuess.distance === 0) {
+      if (newGuess.fromDistance === 0 && newGuess.toDistance === 0) {
         setWon(true);
         getIpData();
         toast.success(t("welldone"), { delay: 2000 });
       }
     },
-    [addGuess, country, currentGuess, i18n.resolvedLanguage, t, isAprilFools]
+    [
+      addGuess,
+      targetCountries,
+      currentFromGuess,
+      currentToGuess,
+      i18n.resolvedLanguage,
+      t,
+      isAprilFools,
+    ]
   );
 
   useEffect(() => {
@@ -110,10 +131,10 @@ export function Game({ settingsData }: GameProps) {
     };
     if (
       guesses.length === MAX_TRY_COUNT &&
-      guesses[guesses.length - 1].distance > 0
+      guesses[guesses.length - 1].fromDistance > 0
     ) {
-      const countryName = country
-        ? getCountryName(i18n.resolvedLanguage, country)
+      const countryName = targetCountries[0]
+        ? getCountryName(i18n.resolvedLanguage, targetCountries[0])
         : "";
       if (countryName) {
         toast.info(countryName.toUpperCase(), {
@@ -123,7 +144,23 @@ export function Game({ settingsData }: GameProps) {
       }
       getIpData();
     }
-  }, [country, guesses, i18n.resolvedLanguage]);
+
+    if (
+      guesses.length === MAX_TRY_COUNT &&
+      guesses[guesses.length - 1].toDistance > 0
+    ) {
+      const countryName = targetCountries[1]
+        ? getCountryName(i18n.resolvedLanguage, targetCountries[1])
+        : "";
+      if (countryName) {
+        toast.info(countryName.toUpperCase(), {
+          autoClose: false,
+          delay: 2000,
+        });
+      }
+      getIpData();
+    }
+  }, [targetCountries, guesses, i18n.resolvedLanguage]);
 
   useEffect(() => {
     if (ipData) {
@@ -132,7 +169,7 @@ export function Game({ settingsData }: GameProps) {
           date: new Date(),
           guesses,
           ip: ipData,
-          answer: country,
+          answer: targetCountries,
           won,
         })
         .catch(function (error) {
@@ -150,16 +187,22 @@ export function Game({ settingsData }: GameProps) {
           }
         });
     }
-  }, [guesses, ipData, won, country]);
+  }, [guesses, ipData, won, targetCountries]);
 
   let iframeSrc = "https://oec.world/en/tradle/aprilfools.html";
-  let oecLink = "https://oec.world/";
-  const country3LetterCode = country?.code
-    ? countryISOMapping[country.code].toLowerCase()
+  let oecFromLink = "https://oec.world/";
+  let oecToLink = "https://oec.world/";
+  const fromCountry3LetterCode = targetCountries[0]?.code
+    ? countryISOMapping[targetCountries[0].code].toLowerCase()
     : "";
+  const toCountry3LetterCode = targetCountries[1]?.code
+    ? countryISOMapping[targetCountries[1].code].toLowerCase()
+    : "";
+
   if (!isAprilFools) {
-    iframeSrc = `https://oec.world/en/visualize/embed/tree_map/hs92/export/${country3LetterCode}/all/show/2021/?controls=false&title=false&click=false`;
-    oecLink = `https://oec.world/en/profile/country/${country3LetterCode}`;
+    iframeSrc = `https://oec.world/en/visualize/embed/tree_map/hs92/export/${fromCountry3LetterCode}/${toCountry3LetterCode}/show/2021/?controls=false&title=false&click=false`;
+    oecFromLink = `https://oec.world/en/profile/country/${fromCountry3LetterCode}`;
+    oecToLink = `https://oec.world/en/profile/country/${toCountry3LetterCode}`;
   }
 
   return (
@@ -175,7 +218,7 @@ export function Game({ settingsData }: GameProps) {
       )}
       {/* <div className="my-1 mx-auto"> */}
       <h2 className="font-bold text-center">
-        Guess which country exports these products!
+        Which country exports these goods to which country?
       </h2>
       <div
         style={{
@@ -185,7 +228,7 @@ export function Game({ settingsData }: GameProps) {
           height: 0,
         }}
       >
-        {country3LetterCode ? (
+        {fromCountry3LetterCode ? (
           <iframe
             style={{
               position: "absolute",
@@ -231,7 +274,7 @@ export function Game({ settingsData }: GameProps) {
             />
             <a
               className="underline w-full text-center block mt-4 flex justify-center"
-              href={oecLink}
+              href={oecFromLink}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -263,17 +306,19 @@ export function Game({ settingsData }: GameProps) {
           <form onSubmit={handleSubmit}>
             <div className="">
               <CountryInput
-                countryValue={countryValue}
-                setCountryValue={setCountryValue}
-                setCurrentGuess={setCurrentGuess}
+                placeholder="Exporting country"
+                countryValue={fromCountryValue}
+                setCountryValue={setFromCountryValue}
+                setCurrentGuess={setCurrentFromGuess}
                 isAprilFools={isAprilFools}
               />
-              {/* <button
-                className="border-2 uppercase my-0.5 hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-slate-800 dark:active:bg-slate-700"
-                type="submit"
-              >
-                🌍 {t("guess")}
-              </button> */}
+              <CountryInput
+                placeholder="Importing country"
+                countryValue={toCountryValue}
+                setCountryValue={setToCountryValue}
+                setCurrentGuess={setCurrentToGuess}
+                isAprilFools={isAprilFools}
+              />
               <div className="text-left">
                 <button className="my-2 inline-block justify-end bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded items-center">
                   {isAprilFools ? "🪄" : "🌍"} <span>Guess</span>

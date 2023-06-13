@@ -8,6 +8,7 @@ import { Group, Text, Autocomplete } from "@mantine/core";
 import { flag } from "country-emoji";
 
 interface CountryInputProps {
+  placeholder: string;
   setCountryValue: Dispatch<SetStateAction<string>>;
   countryValue: string;
   setCurrentGuess: (guess: string) => void;
@@ -47,6 +48,7 @@ const AutoCompleteItemAprilFools = forwardRef<HTMLDivElement, ItemProps>(
 AutoCompleteItemAprilFools.displayName = "Autocomplete Item April Fools";
 
 export function CountryInput({
+  placeholder,
   countryValue,
   setCountryValue,
   setCurrentGuess,
@@ -66,7 +68,7 @@ export function CountryInput({
   return (
     <Autocomplete
       autoComplete="noautocompleteplzz"
-      placeholder="Pick a location"
+      placeholder={placeholder}
       limit={5}
       itemComponent={
         isAprilFools ? AutoCompleteItemAprilFools : AutoCompleteItem
